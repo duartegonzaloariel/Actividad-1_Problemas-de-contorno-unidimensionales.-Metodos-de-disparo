@@ -27,19 +27,13 @@ for k = 1:maxiter
         break
     end
 
-    tn = t - F/dF;                       % paso de Newton
-
-    if abs(tn - t) < tol
+    % Criterio de parada: la condicion de contorno en b se cumple
+    if abs(F) < tol
         convergio = true;
-        t = tn;
-        [x, Y] = rk4_sistema(@sistema, a, b, N, [t; 1/4 - 2*t; 1; -2]);
-        T(end+1)   = t;
-        Fv(end+1)  = -4*Y(end,1) + 2*Y(end,2) - 2;
-        dFv(end+1) = -4*Y(end,3) + 2*Y(end,4);
-        disparos{end+1} = Y(:,1);
         break
     end
-    t = tn;
+
+    t = t - F/dF;                        % paso de Newton
 end
 
 n = length(T);
@@ -82,8 +76,8 @@ for j = 1:N+1
 end
 
 % ---- CONDICIONES DE CONTORNO ----
-fprintf('\n2y(0) + y''(0)     = %.6f\n', 2*Y(1,1) + Y(1,2));
-fprintf('-4y(pi) + 2y''(pi) = %.6f\n', -4*Y(end,1) + 2*Y(end,2));
+fprintf('\n2y(0) + y''(0)     = %.10f\n', 2*Y(1,1) + Y(1,2));
+fprintf('-4y(pi) + 2y''(pi) = %.10f\n', -4*Y(end,1) + 2*Y(end,2));
 fprintf('F''(t*)            = %.6f\n', dFv(end));
 
 % ---- GRAFICO ----
@@ -99,7 +93,7 @@ leyenda{n} = sprintf('Solucion (t = %.6f)', T(end));
 xlabel('x');
 ylabel('y(x)');
 title(sprintf('Disparo con Newton: disparos sucesivos (N = %d)', N));
-legend(leyenda, 'Location', 'southwest');
+legend(leyenda, 'Location', 'eastoutside');
 grid on;
 hold off;
 print('-dpng', '-r300', 'disparo_newton.png');

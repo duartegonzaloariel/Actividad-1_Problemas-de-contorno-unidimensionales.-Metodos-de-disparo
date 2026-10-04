@@ -5,7 +5,7 @@ a = 0;  b = pi;
 N = 10;
 tol = 1e-6;
 maxiter = 50;
-tstar = 0.2710333105;      % raiz obtenida con disparo_newton.m
+tstar = 0.2710333108;      % raiz obtenida con disparo_newton.m
 
 % ---- 1) TABLA: valores iniciales seleccionados ----
 t0s = [0.25 0.30 0.20 0.35 0.10 0.40 0.06 0.05 0.00 -1.00 -1.50 -2.00 -2.70 -3.00];
@@ -89,17 +89,16 @@ function [t, it, conv, t1] = newton_disparo(t0, a, b, N, tol, maxiter)
         if ~isfinite(F) || ~isfinite(dF) || dF == 0
             return
         end
-        tn = t - F/dF;
-        it = k;
-        if k == 1
-            t1 = tn;
-        end
-        if abs(tn - t) < tol
-            t = tn;
+        % Criterio de parada: la condicion de contorno en b se cumple
+        if abs(F) < tol
             conv = true;
             return
         end
-        t = tn;
+        t = t - F/dF;                    % paso de Newton
+        it = k;
+        if k == 1
+            t1 = t;
+        end
     end
 end
 

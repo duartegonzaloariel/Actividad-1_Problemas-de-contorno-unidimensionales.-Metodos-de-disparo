@@ -46,10 +46,14 @@ fprintf('  Secante - bvp5c (por defecto):    %.3e\n', max(abs(yS - yD)));
 fprintf('  bvp5c por defecto - exigente:     %.3e\n', max(abs(yD - yF)));
 
 % ---- ERROR DEL DISPARO AL REFINAR LA MALLA ----
-fprintf('\n%6s %16s %14s %10s\n', 'N', 't (Newton)', '|t - y_B(0)|', 'cociente');
+% Se usa una tolerancia mas exigente para que el error de la iteracion
+% no enmascare el error de discretizacion de RK4.
+tolRef = 1e-12;
+fprintf('\nRefinamiento de la malla (Newton, tol = %.0e):\n', tolRef);
+fprintf('%6s %16s %14s %10s\n', 'N', 't (Newton)', '|t - y_B(0)|', 'cociente');
 errAnt = NaN;
 for NN = [10 20 40]
-    tNN = disparo_newton(0.2, a, b, NN, tol, maxiter);
+    tNN = disparo_newton(0.2, a, b, NN, tolRef, maxiter);
     err = abs(tNN - yF(1));
     fprintf('%6d %16.10f %14.3e %10.2f\n', NN, tNN, err, errAnt/err);
     errAnt = err;
@@ -81,7 +85,7 @@ semilogy(x, max(abs(yS - yN), eps), 's-', 'Color', [0.47 0.67 0.19], 'LineWidth'
 xlabel('x');
 ylabel('Diferencia absoluta');
 title('Diferencias en los nodos');
-legend('|Secante - bvp5c|', '|Newton - bvp5c|', '|Secante - Newton|', 'Location', 'east');
+legend('|Secante - bvp5c|', '|Newton - bvp5c|', '|Secante - Newton|', 'Location', 'best');
 grid on;
 hold off;
 
@@ -100,7 +104,8 @@ function [t, it, Y] = disparo_secante(t0, t1, a, b, N, tol, maxiter)
         [~, Y] = rk4_sistema(@sistema2, a, b, N, [t; 1/4 - 2*t]);
         F = -4*Y(end,1) + 2*Y(end,2) - 2;
         it = k;
-        if abs(t - t1) < tol
+        % Criterio de parada: la condicion de contorno en b se cumple
+        if abs(F) < tol
             break
         end
         t0 = t1;  F0 = F1;
@@ -114,14 +119,12 @@ function [t, it, Y] = disparo_newton(t0, a, b, N, tol, maxiter)
         [~, Y] = rk4_sistema(@sistema4, a, b, N, [t; 1/4 - 2*t; 1; -2]);
         F  = -4*Y(end,1) + 2*Y(end,2) - 2;
         dF = -4*Y(end,3) + 2*Y(end,4);
-        tn = t - F/dF;
-        it = k;
-        if abs(tn - t) < tol
-            t = tn;
-            [~, Y] = rk4_sistema(@sistema4, a, b, N, [t; 1/4 - 2*t; 1; -2]);
+        % Criterio de parada: la condicion de contorno en b se cumple
+        if abs(F) < tol
             break
         end
-        t = tn;
+        t = t - F/dF;                    % paso de Newton
+        it = k;
     end
 end
 
